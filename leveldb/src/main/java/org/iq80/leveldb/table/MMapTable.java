@@ -22,6 +22,7 @@ import org.iq80.leveldb.util.Closeables;
 import org.iq80.leveldb.util.Slice;
 import org.iq80.leveldb.util.Slices;
 import org.iq80.leveldb.util.Snappy;
+import org.iq80.leveldb.util.Zlib;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -34,7 +35,7 @@ import java.util.Comparator;
 import java.util.concurrent.Callable;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.iq80.leveldb.CompressionType.SNAPPY;
+import static org.iq80.leveldb.CompressionType.*;
 
 public class MMapTable
         extends Table
@@ -110,7 +111,31 @@ public class MMapTable
         // decompress data
         Slice uncompressedData;
         ByteBuffer uncompressedBuffer = read(this.data, (int) blockHandle.getOffset(), blockHandle.getDataSize());
-        if (blockTrailer.getCompressionType() == SNAPPY) {
+        if (blockTrailer.getCompressionType() == ZLIB) {
+            synchronized (MMapTable.class) {
+                int uncompressedLength = uncompressedLength(uncompressedBuffer);
+                if (uncompressedScratch.capacity() < uncompressedLength) {
+                    uncompressedScratch = ByteBuffer.allocateDirect(uncompressedLength);
+                }
+                uncompressedScratch.clear();
+
+                Zlib.uncompress(uncompressedBuffer, uncompressedScratch);
+                uncompressedData = Slices.copiedBuffer(uncompressedScratch);
+            }
+        }
+        else if (blockTrailer.getCompressionType() == ZLIBRAW) {
+            synchronized (MMapTable.class) {
+                int uncompressedLength = uncompressedLength(uncompressedBuffer);
+                if (uncompressedScratch.capacity() < uncompressedLength) {
+                    uncompressedScratch = ByteBuffer.allocateDirect(uncompressedLength);
+                }
+                uncompressedScratch.clear();
+
+                Zlib.uncompressRaw(uncompressedBuffer, uncompressedScratch);
+                uncompressedData = Slices.copiedBuffer(uncompressedScratch);
+            }
+        }
+        else if (blockTrailer.getCompressionType() == SNAPPY) {
             synchronized (MMapTable.class) {
                 int uncompressedLength = uncompressedLength(uncompressedBuffer);
                 if (uncompressedScratch.capacity() < uncompressedLength) {

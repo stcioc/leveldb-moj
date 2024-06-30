@@ -58,7 +58,7 @@ public final class Filename
      */
     public static String tableFileName(long number)
     {
-        return makeFileName(number, "sst");
+        return makeFileName(number, "ldb");
     }
 
     /**
@@ -145,8 +145,8 @@ public final class Filename
             long fileNumber = Long.parseLong(removeSuffix(fileName, ".log"));
             return new FileInfo(FileType.LOG, fileNumber);
         }
-        else if (fileName.endsWith(".sst")) {
-            long fileNumber = Long.parseLong(removeSuffix(fileName, ".sst"));
+        else if (fileName.endsWith(".ldb")) {
+            long fileNumber = Long.parseLong(removeSuffix(fileName, ".ldb"));
             return new FileInfo(FileType.TABLE, fileNumber);
         }
         else if (fileName.endsWith(".dbtmp")) {

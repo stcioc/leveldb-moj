@@ -20,3 +20,4 @@ leveldb-c
 .classpath
 .settings
 eclipse-classes
+out/

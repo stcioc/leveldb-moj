@@ -20,7 +20,10 @@ package org.iq80.leveldb;
 public enum CompressionType
 {
     NONE(0x00),
-    SNAPPY(0x01);
+    SNAPPY(0x01),
+    // MCPE-specific (as are all code blocks depending on it).
+    ZLIB(0x02),
+    ZLIBRAW(0x04);
 
     public static CompressionType getCompressionTypeByPersistentId(int persistentId)
     {

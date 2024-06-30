@@ -20,13 +20,14 @@ package org.iq80.leveldb.table;
 import org.iq80.leveldb.util.Slice;
 import org.iq80.leveldb.util.Slices;
 import org.iq80.leveldb.util.Snappy;
+import org.iq80.leveldb.util.Zlib;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Comparator;
 
-import static org.iq80.leveldb.CompressionType.SNAPPY;
+import static org.iq80.leveldb.CompressionType.*;
 
 public class FileChannelTable
         extends Table
@@ -70,7 +71,35 @@ public class FileChannelTable
 
         ByteBuffer uncompressedBuffer = read(blockHandle.getOffset(), blockHandle.getDataSize());
         Slice uncompressedData;
-        if (blockTrailer.getCompressionType() == SNAPPY) {
+        if (blockTrailer.getCompressionType() == ZLIB) {
+            synchronized (FileChannelTable.class) {
+                int uncompressedLength = uncompressedLength(uncompressedBuffer);
+                if (uncompressedScratch.capacity() < uncompressedLength) {
+                    uncompressedScratch = ByteBuffer.allocateDirect(uncompressedLength);
+                }
+                uncompressedScratch.clear();
+
+                Zlib.uncompress(uncompressedBuffer, uncompressedScratch);
+                uncompressedData = Slices.copiedBuffer(uncompressedScratch);
+            }
+        }
+        else if (blockTrailer.getCompressionType() == ZLIBRAW) {
+            synchronized (FileChannelTable.class) {
+                //it seems for Minecraft leveldb, this fails in
+                //leveldb.util.VariableLengthQuantity.readVariableLengthInt
+                // "last byte of variable length int has high bit set"
+                /*
+                int uncompressedLength = uncompressedLength(uncompressedBuffer);
+                if (uncompressedScratch.capacity() < uncompressedLength) {
+                    uncompressedScratch = ByteBuffer.allocateDirect(uncompressedLength);
+                }*/
+                uncompressedScratch.clear();
+
+                Zlib.uncompressRaw(uncompressedBuffer, uncompressedScratch);
+                uncompressedData = Slices.copiedBuffer(uncompressedScratch);
+            }
+        }
+        else if (blockTrailer.getCompressionType() == SNAPPY) {
             synchronized (FileChannelTable.class) {
                 int uncompressedLength = uncompressedLength(uncompressedBuffer);
                 if (uncompressedScratch.capacity() < uncompressedLength) {

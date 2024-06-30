@@ -5,13 +5,16 @@ Java.  This goal is to have a feature complete implementation that is within
 10% of the performance of the C++ original and produces byte-for-byte exact
 copies of the C++ code.
 
-# Current status
+# Purpose of this fork (leveldb-moj)
 
-Currently the code base is basically functional, but only trivially tested.
-In some places, this code is a literal conversion of the C++ code and in
-others it has been converted to a more natural Java style.  The plan is to
-leave the code closer to the C++ original until the baseline performance has
-been established.
+The code was adapted to be able to open Minecraft Android (MCPE) worlds.
+Changes:
+* replaced sst extension with ldb
+* added support for ZLIB and raw ZLIB compression
+
+Althrough the library is able to read Minecraft worlds, there is no guarantee
+that changing them is safe, or even that simply reading them is safe. Please
+run the code on a copy of your Minecraft world in order to not corrupt the save.
 
 ## API Usage:
 
@@ -168,7 +171,4 @@ Options options = new Options();
 factory.destroy(new File("example"), options);
 ```
 
-# Projects using this port of LevelDB
 
-* [ActiveMQ Apollo](http://activemq.apache.org/apollo/): Defaults to using leveldbjni, but falls 
-  back to this port if the jni port is not available on your platform.
